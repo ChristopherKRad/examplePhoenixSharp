@@ -10,16 +10,30 @@ public class WebSocketClient : MonoBehaviour
     void Start()
     {
         var websocketFactory = new WebsocketSharpFactory();
+        var socketAddress = "ws://bitter-resonance-4714.fly.dev";
         var jsonMessageSerializer = new JsonMessageSerializer();
         var socketOptions = new Socket.Options(jsonMessageSerializer);
 
-        socket = new Socket("ws://bitter-resonance-4714.fly.dev", null, websocketFactory, socketOptions);
+        socket = new Socket(socketAddress, null, websocketFactory, socketOptions);
 
         socket.OnOpen += OnSocketOpen;
         socket.OnMessage += OnSocketMessage;
         socket.OnError += OnSocketError;
 
         socket.Connect();
+
+        var roomChannel = socket.Channel("tester:phoenix-sharp", null);
+    
+    // Add event listeners for the channel
+    roomChannel.On(Message.InBoundEvent.Error, message => Debug.LogError("Error: " + message));
+    roomChannel.On("after_join", message => Debug.Log("After Join: " + message));
+    // Other event listeners as needed
+
+    // Join the channel
+    roomChannel.Join()
+        .Receive(ReplyStatus.Ok, reply => Debug.Log("Joined channel successfully"))
+        .Receive(ReplyStatus.Error, reply => Debug.LogError("Error joining channel"));
+
     }
 
     private void OnSocketOpen()
